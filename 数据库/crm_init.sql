@@ -1,6 +1,6 @@
 -- ============================================================
 -- CRM 客户关系管理系统 - 完整建库脚本 (MySQL 8.0+)
--- 包含: 12张表 + 2个视图 + 索引 + 初始化数据
+-- 包含: 9张表 + 2个视图 + 索引 + 初始化数据
 -- ============================================================
 DROP DATABASE IF EXISTS crm_db;
 CREATE DATABASE IF NOT EXISTS crm_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
@@ -228,51 +228,6 @@ CREATE TABLE crm_work_order_log (
     CONSTRAINT fk_log_order FOREIGN KEY (order_id) REFERENCES crm_work_order (order_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工单操作日志表';
 
--- 10. 导入导出日志表
-CREATE TABLE crm_import_export_log (
-    log_id BIGINT(20) NOT NULL AUTO_INCREMENT,
-    module VARCHAR(32) NOT NULL,
-    operation VARCHAR(16) NOT NULL,
-    file_name VARCHAR(255) NOT NULL,
-    file_path VARCHAR(500) DEFAULT NULL,
-    file_size BIGINT(20) DEFAULT NULL,
-    total_count INT(11) NOT NULL DEFAULT 0,
-    success_count INT(11) NOT NULL DEFAULT 0,
-    fail_count INT(11) NOT NULL DEFAULT 0,
-    error_detail TEXT DEFAULT NULL,
-    operator_id BIGINT(20) NOT NULL,
-    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (log_id), KEY idx_ielog_module_time (module, create_time),
-    CONSTRAINT fk_ielog_operator FOREIGN KEY (operator_id) REFERENCES sys_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='导入导出日志表';
-
--- 11. 字典类型表
-CREATE TABLE sys_dict_type (
-    dict_id BIGINT(20) NOT NULL AUTO_INCREMENT,
-    dict_name VARCHAR(64) NOT NULL,
-    dict_type VARCHAR(64) NOT NULL,
-    status TINYINT(1) NOT NULL DEFAULT 1,
-    remark VARCHAR(500) DEFAULT NULL,
-    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (dict_id), UNIQUE KEY uk_dict_type (dict_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='字典类型表';
-
--- 12. 字典数据表
-CREATE TABLE sys_dict_data (
-    dict_data_id BIGINT(20) NOT NULL AUTO_INCREMENT,
-    dict_type VARCHAR(64) NOT NULL,
-    dict_label VARCHAR(64) NOT NULL,
-    dict_value VARCHAR(64) NOT NULL,
-    css_class VARCHAR(64) DEFAULT NULL,
-    sort_order INT(11) NOT NULL DEFAULT 0,
-    is_default TINYINT(1) NOT NULL DEFAULT 0,
-    status TINYINT(1) NOT NULL DEFAULT 1,
-    remark VARCHAR(500) DEFAULT NULL,
-    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (dict_data_id),
-    CONSTRAINT fk_dict_data_type FOREIGN KEY (dict_type) REFERENCES sys_dict_type (dict_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='字典数据表';
-
 -- 视图: 工单详情
 CREATE VIEW v_work_order_detail AS
 SELECT wo.*, c.customer_name, c.customer_type, c.customer_level,
@@ -357,23 +312,3 @@ INSERT INTO crm_work_order_log (order_id, operation_type, operator_id, operator_
 (8,'CREATE',3,'李四',NULL,1,'创建工单','2026-06-05 15:40:00'),
 (8,'ASSIGN',3,'李四',1,2,'指派给李四处理','2026-06-05 16:00:00'),
 (8,'REPLY',3,'李四',2,3,'已回单:架构评审通过','2026-06-08 16:30:00');
-
-INSERT INTO sys_dict_type (dict_name, dict_type) VALUES
-('客户类型','customer_type'),('客户等级','customer_level'),('客户来源','customer_source'),('客户状态','customer_status'),
-('业务类型','business_type'),('业务状态','business_status'),('业务优先级','business_priority'),
-('工单类型','work_order_type'),('工单状态','work_order_status'),('工单优先级','work_order_priority'),('工单来源','work_order_source'),
-('信用评级','credit_rating'),('所属行业','industry'),('性别','gender');
-
-INSERT INTO sys_dict_data (dict_type, dict_label, dict_value, sort_order) VALUES
-('customer_type','个人','1',1),('customer_type','企业','2',2),('customer_type','政府','3',3),('customer_type','其他','4',4),
-('customer_level','普通','1',1),('customer_level','重要','2',2),('customer_level','VIP','3',3),('customer_level','战略','4',4),
-('customer_status','停用','0',1),('customer_status','正常','1',2),('customer_status','黑名单','2',3),
-('business_type','产品销售','1',1),('business_type','技术服务','2',2),('business_type','咨询服务','3',3),('business_type','售后服务','4',4),('business_type','其他','5',5),
-('business_status','进行中','1',1),('business_status','已完成','2',2),('business_status','暂停','3',3),('business_status','取消','4',4),
-('work_order_type','咨询','1',1),('work_order_type','投诉','2',2),('work_order_type','服务','3',3),('work_order_type','维修','4',4),('work_order_type','其他','5',5),
-('work_order_status','待处理','1',1),('work_order_status','处理中','2',2),('work_order_status','已回单','3',3),('work_order_status','已退单','4',4),('work_order_status','已关闭','5',5),
-('work_order_priority','紧急','1',1),('work_order_priority','高','2',2),('work_order_priority','中','3',3),('work_order_priority','低','4',4),
-('work_order_source','电话','1',1),('work_order_source','邮件','2',2),('work_order_source','在线','3',3),('work_order_source','现场','4',4),
-('credit_rating','AAA','1',1),('credit_rating','AA','2',2),('credit_rating','A','3',3),('credit_rating','B','4',4),('credit_rating','C','5',5),
-('industry','IT/互联网','1',1),('industry','金融','2',2),('industry','教育','3',3),('industry','制造','4',4),('industry','医疗','5',5),('industry','零售','6',6),
-('gender','未知','0',1),('gender','男','1',2),('gender','女','2',3);
